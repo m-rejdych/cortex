@@ -1,7 +1,8 @@
 import express from 'express';
 import { config } from 'dotenv';
 
-import { router as assistantRouter } from './routers/assistant';
+import { assistantRouter } from './routers';
+import { genericErrorHandler } from './util/error';
 
 config();
 
@@ -13,6 +14,7 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-app.get('/assistant', assistantRouter);
+app.use('/assistant', assistantRouter);
+app.use(genericErrorHandler);
 
 app.listen(PORT, HOST, () => console.log(`Listening on http://${HOST}:${PORT}`));
