@@ -6,9 +6,13 @@ interface InputPayload {
   input: string;
 }
 
-export const assistantController: RequestHandler<string, InputPayload> = (req, res, next) => {
+export const assistantController: RequestHandler<string | null, InputPayload> = async (
+  req,
+  res,
+  next,
+) => {
   try {
-    const result = assistantService(req.body.input);
+    const result = await assistantService(req.body.input);
     res.json({ result: 'success', data: result });
   } catch (error) {
     next(error);
