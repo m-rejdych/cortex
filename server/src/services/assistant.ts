@@ -1,6 +1,6 @@
 import { openai } from '@/sdks';
 
-import { StatusError } from '@/models';
+import { getFirstChatCompletionChoiceContentOrThrow } from '@/util/assistant';
 
 export const assistantService = async (input: string): Promise<string | null> => {
   const response = await openai.chat.completions.create({
@@ -9,9 +9,5 @@ export const assistantService = async (input: string): Promise<string | null> =>
     messages: [{ role: 'user', content: input }],
   });
 
-  const [choice] = response.choices;
-
-  if (!choice) throw new StatusError('No choice found.');
-
-  return choice.message.content;
+  return getFirstChatCompletionChoiceContentOrThrow(response);
 };
