@@ -1,6 +1,8 @@
 import type OpenAI from 'openai';
 
 import { StatusError } from '@/models';
+import { INTENTIONS } from '@/constants/assistant';
+import type { IntentionObj, Intention } from '@/types/assistant';
 
 export const getFirstChatCompletionChoiceContentOrThrow = (
   completion: OpenAI.ChatCompletion,
@@ -13,3 +15,12 @@ export const getFirstChatCompletionChoiceContentOrThrow = (
 
   return choice.message.content;
 };
+
+const isIntention = (intention: unknown): intention is Intention =>
+  Object.values(INTENTIONS).includes(intention as Intention);
+
+export const isIntentionObj = (jsonObj: unknown): jsonObj is IntentionObj =>
+  typeof jsonObj === 'object' &&
+  jsonObj !== null &&
+  'intention' in jsonObj &&
+  isIntention(jsonObj.intention);

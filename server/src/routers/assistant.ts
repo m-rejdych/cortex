@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { assistantController } from '@/contollers/assistant';
+import { assistantController } from '@/controllers/assistant';
 
 export const router = Router();
 

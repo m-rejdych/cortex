@@ -11,3 +11,5 @@ export type RequestHandler<
   Query = Record<string, never>,
   Params = Record<string, never>,
 > = ExpressRequestHandler<Params, ResultResponse<ResBody>, ReqBody, Query>;
+
+export type JsonObj = Record<string, unknown>;
