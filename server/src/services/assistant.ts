@@ -1,11 +1,13 @@
 import { openai } from '@/sdks';
 
-import { getFirstChatCompletionChoiceContentOrThrow, isIntentionObj } from '@/util/assistant';
-import { getPrompt, extractJsonObj } from '@/util/prompts';
-import type { JsonObj } from '@/types/http';
+import { matchIntention } from '@/util/assistant';
+import { getFirstChatCompletionChoiceContentOrThrow } from '@/util/openai';
+import { getPrompt } from '@/util/prompts';
+import { StatusError } from '@/models';
+import type { Intention } from '@/types/assistant';
 
-export const assistantService = async (input: string): Promise<JsonObj | null> => {
-  const systemMessage = await getPrompt('INTENTION_SYSTEM');
+export const assistantService = async (input: string): Promise<Intention> => {
+  const systemMessage = await getPrompt('CLASSIFICATION_SYSTEM');
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -17,7 +19,14 @@ export const assistantService = async (input: string): Promise<JsonObj | null> =
   });
 
   const completionContent = getFirstChatCompletionChoiceContentOrThrow(response);
-  const jsonObj = completionContent ? extractJsonObj(completionContent) : null;
+  if (!completionContent) {
+    throw new StatusError('Intention not recoqnised.', 400);
+  }
 
-  return isIntentionObj(jsonObj) ? jsonObj : null;
+  const intention = matchIntention(completionContent);
+  if (!intention) {
+    throw new StatusError('Intention not recoqnised.', 400);
+  }
+
+  return intention;
 };

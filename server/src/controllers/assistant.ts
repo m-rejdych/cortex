@@ -1,13 +1,13 @@
 import type { RequestHandler } from '@/types/http';
 
 import { assistantService } from '@/services/assistant';
-import type { JsonObj } from '@/types/http';
+import type { Intention } from '@/types/assistant';
 
 interface InputPayload {
   input: string;
 }
 
-export const assistantController: RequestHandler<JsonObj | null, InputPayload> = async (
+export const assistantController: RequestHandler<Intention, InputPayload> = async (
   req,
   res,
   next,
