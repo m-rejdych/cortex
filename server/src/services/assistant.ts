@@ -1,31 +1,53 @@
 import { openai } from '@/sdks';
 
-import { matchIntention } from '@/util/assistant';
+import { matchIntention, matchSource, type Matcher } from '@/util/assistant';
 import { getFirstChatCompletionChoiceContentOrThrow } from '@/util/openai';
 import { getPrompt } from '@/util/prompts';
 import { StatusError } from '@/models';
-import type { Intention } from '@/types/assistant';
+import type { Intention, Source } from '@/types/assistant';
+import type { PromptType } from '@/constants/prompts';
 
-export const assistantService = async (input: string): Promise<Intention> => {
-  const systemMessage = await getPrompt('CLASSIFICATION_SYSTEM');
+const matchCompletionContent =
+  <T>(promptType: PromptType, matcher: Matcher<T>) =>
+  async (input: string): Promise<T> => {
+    const systemMessage = await getPrompt(promptType);
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    temperature: 0.3,
-    messages: [
-      { role: 'system', content: systemMessage },
-      { role: 'user', content: input },
-    ],
-  });
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.3,
+      messages: [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: input },
+      ],
+    });
 
-  const completionContent = getFirstChatCompletionChoiceContentOrThrow(response);
-  if (!completionContent) {
-    throw new StatusError('Intention not recoqnised.', 400);
-  }
+    const completionContent = getFirstChatCompletionChoiceContentOrThrow(response);
+    if (!completionContent) {
+      throw new StatusError('Intention not recoqnised.', 400);
+    }
 
-  const intention = matchIntention(completionContent);
-  if (!intention) {
-    throw new StatusError('Intention not recoqnised.', 400);
+    const match = matcher(completionContent);
+    if (!match) {
+      throw new StatusError('Intention not recoqnised.', 400);
+    }
+
+    return match;
+  };
+
+const selectSource = matchCompletionContent('SOURCE_SELECTION_SYSTEM', matchSource);
+
+const classifyIntention = matchCompletionContent('INTENTION_CLASSIFICATION_SYSTEM', matchIntention);
+
+export const assistantService = async (input: string): Promise<Intention | Source> => {
+  const intention = await classifyIntention(input);
+
+  switch (intention) {
+    case 'query':
+      return selectSource(input);
+    case 'action':
+      break;
+    default:
+      break;
   }
 
   return intention;
