@@ -1,10 +1,10 @@
 import { openai } from '@/sdks';
 
-import { matchIntention, matchSource, type Matcher } from '@/util/assistant';
+import { matchIntention, matchSource, matchAction, type Matcher } from '@/util/assistant';
 import { getFirstChatCompletionChoiceContentOrThrow } from '@/util/openai';
 import { getPrompt } from '@/util/prompts';
 import { StatusError } from '@/models';
-import type { Intention, Source } from '@/types/assistant';
+import type { Intention, Source, Action } from '@/types/assistant';
 import type { PromptType } from '@/constants/prompts';
 
 const matchCompletionContent =
@@ -36,15 +36,18 @@ const matchCompletionContent =
 
 const selectSource = matchCompletionContent('SOURCE_SELECTION_SYSTEM', matchSource);
 
+const selectAction = matchCompletionContent('ACTION_SELECTION_SYSTEM', matchAction);
+
 const classifyIntention = matchCompletionContent('INTENTION_CLASSIFICATION_SYSTEM', matchIntention);
 
-export const assistantService = async (input: string): Promise<Intention | Source> => {
+export const assistantService = async (input: string): Promise<Intention | Source | Action> => {
   const intention = await classifyIntention(input);
 
   switch (intention) {
     case 'query':
       return selectSource(input);
     case 'action':
+      return selectAction(input);
       break;
     default:
       break;

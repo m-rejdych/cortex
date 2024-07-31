@@ -12,3 +12,13 @@ export const SOURCES = {
   LINKS: 'links',
   UNKNOWN: 'unknown',
 } as const;
+
+export const ACTIONS = {
+  SAVE_NOTE: 'saveNote',
+  SAVE_MEMORY: 'saveMemory',
+  SAVE_LINK: 'saveLink',
+  SAVE_CALENDAR_EVENT: 'saveCalendarEvent',
+  SAVE_OBSIDIAN_NOTE: 'saveObsidianNote',
+  SAVE_TODO: 'saveTodo',
+  UNKNOWN: 'unknown',
+} as const;

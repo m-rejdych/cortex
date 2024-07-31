@@ -1,8 +1,10 @@
-import { INTENTIONS, SOURCES } from '@/constants/assistant';
-import type { Intention, Source } from '@/types/assistant';
+import { INTENTIONS, SOURCES, ACTIONS } from '@/constants/assistant';
+import type { Intention, Source, Action } from '@/types/assistant';
 
 const intentionRegexp = /(action|query)/;
 const queryRegexp = /(notes|memories|obsidian|calendar|todos|links|unknown)/;
+const actionRegexp =
+  /(saveNote|saveMemory|saveLink|saveCalendarEvent|saveObsidianNote|saveTodo|unknown)/;
 
 type IsMatchValidator<T> = (value: unknown) => value is T;
 
@@ -13,6 +15,9 @@ const isIntention = (intention: unknown): intention is Intention =>
 
 export const isSoucre = (query: unknown): query is Source =>
   Object.values(SOURCES).includes(query as Source);
+
+export const isAction = (query: unknown): query is Action =>
+  Object.values(ACTIONS).includes(query as Action);
 
 const createMatcher =
   <T>(regexp: RegExp, isMatchValidator: IsMatchValidator<T>): Matcher<T> =>
@@ -29,3 +34,5 @@ const createMatcher =
 export const matchIntention = createMatcher(intentionRegexp, isIntention);
 
 export const matchSource = createMatcher(queryRegexp, isSoucre);
+
+export const matchAction = createMatcher(actionRegexp, isAction);
