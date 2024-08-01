@@ -1,7 +1,7 @@
 import { openai } from '@/sdks';
 
 import { matchIntention, matchSource, matchAction, type Matcher } from '@/util/assistant';
-import { getFirstChatCompletionChoiceContentOrThrow } from '@/util/openai';
+import { getFirstChatCompletionOrThrow } from '@/util/openai';
 import { getPrompt } from '@/util/prompts';
 import { StatusError } from '@/models';
 import type { Intention, Source, Action } from '@/types/assistant';
@@ -21,7 +21,7 @@ const matchCompletionContent =
       ],
     });
 
-    const completionContent = getFirstChatCompletionChoiceContentOrThrow(response);
+    const completionContent = getFirstChatCompletionOrThrow(response);
     if (!completionContent) {
       throw new StatusError('Intention not recoqnised.', 400);
     }
@@ -48,7 +48,6 @@ export const assistantService = async (input: string): Promise<Intention | Sourc
       return selectSource(input);
     case 'action':
       return selectAction(input);
-      break;
     default:
       break;
   }
