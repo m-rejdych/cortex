@@ -13,13 +13,13 @@ export type Matcher<T> = (str: string) => T | null;
 const isIntention = (intention: unknown): intention is Intention =>
   Object.values(INTENTIONS).includes(intention as Intention);
 
-export const isSoucre = (query: unknown): query is Source =>
-  Object.values(SOURCES).includes(query as Source);
+export const isSoucre = (value: unknown): value is Source =>
+  Object.values(SOURCES).includes(value as Source);
 
-export const isAction = (query: unknown): query is Action =>
-  Object.values(ACTIONS).includes(query as Action);
+export const isAction = (value: unknown): value is Action =>
+  Object.values(ACTIONS).includes(value as Action);
 
-const createMatcher =
+const createStrMatcher =
   <T>(regexp: RegExp, isMatchValidator: IsMatchValidator<T>): Matcher<T> =>
   (str) => {
     const matches = str.match(regexp);
@@ -31,8 +31,8 @@ const createMatcher =
     return match;
   };
 
-export const matchIntention = createMatcher(intentionRegexp, isIntention);
+export const matchIntention = createStrMatcher(intentionRegexp, isIntention);
 
-export const matchSource = createMatcher(queryRegexp, isSoucre);
+export const matchSource = createStrMatcher(queryRegexp, isSoucre);
 
-export const matchAction = createMatcher(actionRegexp, isAction);
+export const matchAction = createStrMatcher(actionRegexp, isAction);

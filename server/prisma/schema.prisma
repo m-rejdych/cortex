@@ -14,3 +14,25 @@ datasource db {
   url        = env("DATABASE_URL")
   extensions = [vector]
 }
+
+model Note {
+  id        String                @id @default(uuid())
+  content   String
+  tags      TagOnNotes[]
+  embedding Unsupported("vector")
+}
+
+model Tag {
+  id    String       @id @default(uuid())
+  value String       @unique
+  notes TagOnNotes[]
+}
+
+model TagOnNotes {
+  noteId String
+  tagId  String
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
+}
