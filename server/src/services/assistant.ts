@@ -1,5 +1,6 @@
 import { matchIntention, matchSource, matchAction } from '@/util/assistant';
 import { matchCompletionContent, getChatCompletion } from '@/util/openai';
+import { getPrompt } from '@/util/prompts';
 import { saveNote, getNotesBySimilarity } from '@/services/notes';
 import { INTENTIONS, SOURCES, ACTIONS } from '@/constants/assistant';
 import { StatusError } from '@/models';
@@ -25,12 +26,23 @@ const getQueryResponse = async (input: string, context?: string): Promise<string
   return getChatCompletion(messages);
 };
 
-// const handleActionResponse = async (context?: string): Promise<string> => {};
+const getActionResponse = async (action: Action): Promise<string> => {
+  // TODO: Prepare prompt
+  const prompt = await getPrompt('ACTION_SUCCESS_USER');
 
-const getSourceContextData = async <T extends Source>(source: T): Promise<SourceContextData<T>> => {
+  const messageContent = `${prompt}${action}`;
+  const completion = await getChatCompletion([{ role: 'user', content: messageContent }]);
+
+  return completion;
+};
+
+const getSourceContextData = async <T extends Source>(
+  input: string,
+  source: T,
+): Promise<SourceContextData<T>> => {
   switch (source) {
     case SOURCES.NOTES:
-      return getNotesBySimilarity(source) as SourceContextData<T>;
+      return getNotesBySimilarity(input) as SourceContextData<T>;
     case SOURCES.UNKNOWN:
       return null as SourceContextData<T>;
     default:
@@ -62,7 +74,7 @@ export const assistantService = async (
   switch (intention) {
     case INTENTIONS.QUERY:
       const source = await selectSource(input);
-      const sourceContextData = await getSourceContextData(source);
+      const sourceContextData = await getSourceContextData(input, source);
       const context = sourceContextData
         ? buildContext(
             'NOTES',
@@ -73,8 +85,8 @@ export const assistantService = async (
       return getQueryResponse(input, context);
     case INTENTIONS.ACTION:
       const action = await selectAction(input);
-      runAction(action, input);
-      return action;
+      await runAction(action, input);
+      return getActionResponse(action);
     default:
       break;
   }
