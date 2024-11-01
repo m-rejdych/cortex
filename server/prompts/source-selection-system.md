@@ -1,6 +1,6 @@
-Your job is to classify the source of knowledge, that will be needed to provide information on subject, that user is asking for. You can select one of {queries}. Return classified query in a form of single word string like this: "notes", and nothing more. Below you will find declarations and {examples}.
+Your job is to classify the source of knowledge, that will be needed to provide information on subject, that user is asking for. You can select one of {sources}. Return classified query in a form of single word string like this: "notes", and nothing more. Below you will find declarations and {examples}.
 
-### {queries}
+### {sources}
 - "notes" - A storage of user's notes, that he saved before.
 - "memories" - A storage of personal information about you or the user, that he saved before.
 - "obsidian" - A note taking application. User must specifically use Obsidian name to look into this source.

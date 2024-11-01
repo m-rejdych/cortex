@@ -6,10 +6,15 @@ import { getPrompt } from '@/util/prompts';
 import type { PromptType } from '@/constants/prompts';
 import type { Matcher } from '@/util/assistant';
 
-export const getFirstChatCompletionOrThrow = (
+interface GetChatCompletionOptions {
+  model?: OpenAI.Chat.ChatModel;
+  temperature?: number;
+}
+
+const getFirstChatCompletionOrThrow = (
   completion: OpenAI.ChatCompletion,
   message = 'Completion choice content could not be extracted.',
-): string | null => {
+): string => {
   const [choice] = completion.choices;
   if (!choice?.message.content) {
     throw new StatusError(message);
@@ -18,26 +23,33 @@ export const getFirstChatCompletionOrThrow = (
   return choice.message.content;
 };
 
+export const getChatCompletion = async (
+  messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+  { model = 'gpt-4o-mini', temperature = 0.3 }: GetChatCompletionOptions = {
+    model: 'gpt-4o-mini',
+    temperature: 0.3,
+  },
+): Promise<string> => {
+  const response = await openai.chat.completions.create({
+    model,
+    temperature,
+    messages,
+  });
+
+  return getFirstChatCompletionOrThrow(response);
+};
+
 export const matchCompletionContent =
   <T>(promptType: PromptType, matcher: Matcher<T>) =>
   async (input: string): Promise<T> => {
     const systemMessage = await getPrompt(promptType);
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.3,
-      messages: [
-        { role: 'system', content: systemMessage },
-        { role: 'user', content: input },
-      ],
-    });
+    const completion = await getChatCompletion([
+      { role: 'system', content: systemMessage },
+      { role: 'user', content: input },
+    ]);
 
-    const completionContent = getFirstChatCompletionOrThrow(response);
-    if (!completionContent) {
-      throw new StatusError('Completion not found', 400);
-    }
-
-    const match = matcher(completionContent);
+    const match = matcher(completion);
     if (!match) {
       throw new StatusError('Unexpected completion result', 400);
     }

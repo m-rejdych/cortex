@@ -9,7 +9,7 @@ interface InputPayload {
 }
 
 export const assistantController: RequestHandler<
-  Intention | Source | Action,
+  Intention | Source | Action | string,
   InputPayload
 > = async (req, res, next) => {
   try {
