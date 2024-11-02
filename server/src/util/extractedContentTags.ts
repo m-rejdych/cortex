@@ -1,7 +1,7 @@
 import { extractJsonObj } from '@/util/prompts';
-import type { ExtractedNote } from '@/types/notes';
+import type { ExtractedContentTags } from '@/types/extractedContentTags';
 
-const isExtractedNote = (value: unknown): value is ExtractedNote => {
+const isExtractedTagsContent = (value: unknown): value is ExtractedContentTags => {
   if (typeof value !== 'object') return false;
   if (value === null) return false;
   if (!('content' in value)) return false;
@@ -12,10 +12,10 @@ const isExtractedNote = (value: unknown): value is ExtractedNote => {
   return true;
 };
 
-export const matchExtractedNote = (str: string): ExtractedNote | null => {
+export const matchExtractedTagsContent = (str: string): ExtractedContentTags | null => {
   const jsonObj = extractJsonObj(str);
   if (!jsonObj) return null;
-  if (!isExtractedNote(jsonObj)) return null;
+  if (!isExtractedTagsContent(jsonObj)) return null;
 
   return jsonObj;
 }

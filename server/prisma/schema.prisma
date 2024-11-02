@@ -22,10 +22,18 @@ model Note {
   embedding Unsupported("vector")
 }
 
+model Memory {
+  id        String                @id @default(uuid())
+  content   String
+  tags      TagOnMemories[]
+  embedding Unsupported("vector")
+}
+
 model Tag {
-  id    String       @id @default(uuid())
-  value String       @unique
-  notes TagOnNotes[]
+  id       String          @id @default(uuid())
+  value    String          @unique
+  notes    TagOnNotes[]
+  memories TagOnMemories[]
 }
 
 model TagOnNotes {
@@ -35,4 +43,13 @@ model TagOnNotes {
   tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([noteId, tagId])
+}
+
+model TagOnMemories {
+  memoryId String
+  tagId    String
+  memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([memoryId, tagId])
 }

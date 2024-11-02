@@ -1,16 +1,11 @@
-import { matchIntention, matchSource, matchAction } from '@/util/assistant';
+import { matchIntention, matchSource, matchAction, buildContext } from '@/util/assistant';
 import { matchCompletionContent, getChatCompletion } from '@/util/openai';
 import { getPrompt } from '@/util/prompts';
 import { saveNote, getNotesBySimilarity } from '@/services/notes';
+import { saveMemory } from '@/services/memories';
 import { INTENTIONS, SOURCES, ACTIONS } from '@/constants/assistant';
 import { StatusError } from '@/models';
 import type { Intention, Source, Action } from '@/types/assistant';
-
-type SourceContextData<T extends Source> = T extends typeof SOURCES.NOTES
-  ? ReturnType<typeof getNotesBySimilarity>
-  : T extends typeof SOURCES.UNKNOWN
-    ? null
-    : never;
 
 const selectSource = matchCompletionContent('SOURCE_SELECTION_SYSTEM', matchSource);
 
@@ -27,7 +22,6 @@ const getQueryResponse = async (input: string, context?: string): Promise<string
 };
 
 const getActionResponse = async (action: Action): Promise<string> => {
-  // TODO: Prepare prompt
   const prompt = await getPrompt('ACTION_SUCCESS_USER');
 
   const messageContent = `${prompt}${action}`;
@@ -39,33 +33,31 @@ const getActionResponse = async (action: Action): Promise<string> => {
 const getSourceContextData = async <T extends Source>(
   input: string,
   source: T,
-): Promise<SourceContextData<T>> => {
+): Promise<string[] | null> => {
   switch (source) {
     case SOURCES.NOTES:
-      return getNotesBySimilarity(input) as SourceContextData<T>;
+      return getNotesBySimilarity(input);
     case SOURCES.UNKNOWN:
-      return null as SourceContextData<T>;
+      return null;
     default:
       throw new StatusError('Invalid source');
   }
 };
-
-const buildContext = (header: string, contextData: string[]): string => `CONTEXT
-
-### ${header}
-${contextData.map((element) => `- ${element}`).join('\n')}`;
 
 const runAction = async (action: Action, input: string): Promise<void> => {
   switch (action) {
     case ACTIONS.SAVE_NOTE:
       await saveNote(input);
       break;
+    case ACTIONS.SAVE_MEMORY:
+      await saveMemory(input);
+      break;
     default:
       break;
   }
 };
 
-// TODO: updated return type after function is finished
+// TODO: update return type after function is finished
 export const assistantService = async (
   input: string,
 ): Promise<Intention | Source | Action | string> => {
@@ -75,13 +67,7 @@ export const assistantService = async (
     case INTENTIONS.QUERY:
       const source = await selectSource(input);
       const sourceContextData = await getSourceContextData(input, source);
-      const context = sourceContextData
-        ? buildContext(
-            'NOTES',
-            sourceContextData.map(({ content }) => content),
-          )
-        : undefined;
-
+      const context = sourceContextData ? buildContext('NOTES', sourceContextData) : undefined;
       return getQueryResponse(input, context);
     case INTENTIONS.ACTION:
       const action = await selectAction(input);

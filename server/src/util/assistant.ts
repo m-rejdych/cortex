@@ -36,3 +36,9 @@ export const matchIntention = createStrMatcher(intentionRegexp, isIntention);
 export const matchSource = createStrMatcher(queryRegexp, isSoucre);
 
 export const matchAction = createStrMatcher(actionRegexp, isAction);
+
+export const buildContext = (header: string, contextData: string[]): string => `CONTEXT
+
+### ${header}
+${contextData.map((element) => `- ${element}`).join('\n')}`;
+
