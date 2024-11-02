@@ -1,8 +1,8 @@
 import { matchIntention, matchSource, matchAction, buildContext } from '@/util/assistant';
 import { matchCompletionContent, getChatCompletion } from '@/util/openai';
 import { getPrompt } from '@/util/prompts';
-import { saveNote, getNotesBySimilarity } from '@/services/notes';
-import { saveMemory } from '@/services/memories';
+import { saveNote, getNotesContentBySimilarity } from '@/services/notes';
+import { saveMemory, getMemoriesContentBySimilarity } from '@/services/memories';
 import { INTENTIONS, SOURCES, ACTIONS } from '@/constants/assistant';
 import { StatusError } from '@/models';
 import type { Intention, Source, Action } from '@/types/assistant';
@@ -36,7 +36,9 @@ const getSourceContextData = async <T extends Source>(
 ): Promise<string[] | null> => {
   switch (source) {
     case SOURCES.NOTES:
-      return getNotesBySimilarity(input);
+      return getNotesContentBySimilarity(input);
+    case SOURCES.MEMORIES:
+      return getMemoriesContentBySimilarity(input);
     case SOURCES.UNKNOWN:
       return null;
     default:
@@ -67,7 +69,9 @@ export const assistantService = async (
     case INTENTIONS.QUERY:
       const source = await selectSource(input);
       const sourceContextData = await getSourceContextData(input, source);
-      const context = sourceContextData ? buildContext('NOTES', sourceContextData) : undefined;
+      const context = sourceContextData
+        ? buildContext(source.toUpperCase(), sourceContextData)
+        : undefined;
       return getQueryResponse(input, context);
     case INTENTIONS.ACTION:
       const action = await selectAction(input);

@@ -4,11 +4,8 @@ import type { Note } from '@prisma/client';
 
 import { matchCompletionContent, getTextEmbedding } from '@/util/openai';
 import { matchExtractedTagsContent } from '@/util/extractedContentTags';
+import { getEntriesBySimilarity } from '@/util/similarity';
 import { prisma } from '@/sdks/prisma';
-
-interface NoteWithSimilarityScore extends Note {
-  score: number;
-}
 
 const extractNote = matchCompletionContent('NOTE_EXTRACTION_SYSTEM', matchExtractedTagsContent);
 
@@ -37,15 +34,11 @@ export const saveNote = async (input: string): Promise<void> => {
   await prisma.tagOnNotes.createMany({ data: tags.map(({ id: tagId }) => ({ tagId, noteId })) });
 };
 
-export const getNotesBySimilarity = async (input: string, limit = 5): Promise<string[]> => {
-  const embedding = await getTextEmbedding(input);
-  const sqlEmbedding = pgvector.toSql(embedding);
+export const getNotesContentBySimilarity = async (input: string): Promise<string[]> => {
+  const notes = await getEntriesBySimilarity<Note>(input, {
+    fields: ['id', 'content'],
+    tableName: 'Note',
+  });
 
-  const notes: NoteWithSimilarityScore[] =
-    await prisma.$queryRaw`SELECT id, content, embedding <-> ${sqlEmbedding}::vector AS score FROM "Note" ORDER BY score LIMIT ${limit}`;
-  const average = notes.reduce((acc, { score }) => acc + score, 0) / notes.length;
-
-  return notes
-    .filter(({ score }) => score < parseFloat(average.toFixed(3)))
-    .map(({ content }) => content);
+  return notes.map(({ content }) => content);
 };
